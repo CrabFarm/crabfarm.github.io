@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" media="(prefers-color-scheme: light)" content="#E6E9EC">
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#151B21">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Mes applis">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<title>Mes applis</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#E6E9EC; --panel:#F6F7F8; --ink:#1C2630; --muted:#5D6B78; --line:#C9D0D6;
+  --amber:#E3A008; --amber-ink:#2A1E00; --steel:#2F5D7C; --warn:#B4441F;
+  --font-num:"Barlow Condensed","Arial Narrow",system-ui,sans-serif;
+  --font:"Barlow",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root{ --bg:#151B21; --panel:#1E262E; --ink:#E8EDF1; --muted:#93A1AD; --line:#33404B; --amber:#F0B429; --steel:#7FB3D5; --warn:#E97955; }
+}
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+*,*::before,*::after{box-sizing:inherit}
+html,body{margin:0;min-height:100%}
+body{background:var(--bg);color:var(--ink);font-family:var(--font);font-size:16px;line-height:1.45;-webkit-tap-highlight-color:transparent}
+button,input{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:3px solid var(--steel);outline-offset:2px}
+main{max-width:900px;margin:0 auto;padding:14px 16px 40px}
+
+header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 0 18px;border-bottom:3px solid var(--ink);margin-bottom:18px;position:relative}
+header::after{content:"";position:absolute;left:0;bottom:-9px;width:120px;height:6px;background:repeating-linear-gradient(-45deg,var(--amber) 0 10px,transparent 10px 20px)}
+h1{font-family:var(--font-num);font-weight:700;font-size:34px;margin:0;letter-spacing:.2px}
+.gear{background:var(--panel);border:1px solid var(--line);border-radius:6px;height:42px;padding:0 14px;font-weight:600}
+
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px}
+.tile{display:flex;gap:14px;align-items:center;text-align:left;width:100%;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:14px;color:inherit;text-decoration:none}
+.tile:active{transform:translateY(1px)}
+.ico{flex:none;width:58px;height:58px;border-radius:14px;display:grid;place-items:center;color:#fff;font-family:var(--font-num);font-weight:700;font-size:24px;background:var(--c,var(--steel))}
+.ico.emoji{font-size:30px}
+.tile b{display:block;font-size:18px;font-weight:600;line-height:1.2}
+.tile .d{display:block;color:var(--muted);font-size:14px}
+.tile .m{display:block;color:var(--muted);font-size:12px;margin-top:3px}
+.tile .m.off{color:var(--warn)}
+
+.status{color:var(--muted);font-size:14px;margin:14px 0 0}
+.status.err{color:var(--warn)}
+
+#setup{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:16px;margin-bottom:18px}
+#setup h2{font-family:var(--font-num);font-size:22px;margin:0 0 4px}
+#setup p{margin:0 0 10px;color:var(--muted);font-size:14px}
+.field{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:8px 0;border-bottom:1px solid var(--line)}
+.field input{width:62%;padding:8px;border:1px solid var(--line);border-radius:6px;background:var(--bg)}
+.btns{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+.btn{border:0;border-radius:6px;padding:12px 16px;font-weight:600;background:var(--amber);color:var(--amber-ink)}
+.btn.ghost{background:transparent;border:1px solid var(--line);color:var(--ink)}
+
+#viewer{position:fixed;inset:0;background:var(--bg);z-index:20;display:none}
+#viewer.open{display:block}
+#viewer iframe{position:absolute;inset:0;width:100%;height:100%;border:0;background:#fff}
+#home{position:absolute;left:10px;bottom:calc(10px + env(safe-area-inset-bottom,0px));width:42px;height:42px;border-radius:50%;border:0;background:var(--ink);color:var(--bg);font-size:20px;opacity:.55;z-index:2;box-shadow:0 2px 6px rgba(0,0,0,.3)}
+#home:hover,#home:focus-visible{opacity:1}
+#loading{position:absolute;inset:0;display:grid;place-items:center;color:var(--muted);font-weight:500}
+.hidden{display:none!important}
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>Mes applis</h1>
+    <button class="gear" id="bSetup">Réglages</button>
+  </header>
+
+  <section id="setup" class="hidden">
+    <h2>Accès au dépôt privé</h2>
+    <p>Les applis sont lues dans votre dépôt GitHub privé avec un token en lecture seule. Il reste sur cet appareil.</p>
+    <div class="field"><label for="cOwner">Compte</label><input id="cOwner" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="votre-pseudo"></div>
+    <div class="field"><label for="cRepo">Dépôt</label><input id="cRepo" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="apps"></div>
+    <div class="field"><label for="cBranch">Branche</label><input id="cBranch" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="main"></div>
+    <div class="field"><label for="cToken">Token</label><input id="cToken" type="password" autocomplete="off" placeholder="github_pat_…"></div>
+    <div class="btns">
+      <button class="btn" id="bSave">Enregistrer et charger</button>
+      <button class="btn ghost" id="bForget">Oublier le token</button>
+    </div>
+  </section>
+
+  <div class="grid" id="grid"></div>
+  <p class="status" id="status"></p>
+</main>
+
+<div id="viewer">
+  <div id="loading">Chargement…</div>
+  <iframe id="frame" title="Application" allow="fullscreen; clipboard-read; clipboard-write" allowfullscreen></iframe>
+  <button id="home" aria-label="Retour à mes applis" title="Retour à mes applis">⌂</button>
+</div>
+
+<script>
+"use strict";
+const CFG_KEY = "hub.config", LIST_KEY = "hub.apps", DATES_KEY = "hub.dates", CACHE = "hub-apps-v1";
+const $ = id => document.getElementById(id);
+const get = (k, d) => { try { return JSON.parse(localStorage.getItem(k)) ?? d; } catch(e) { return d; } };
+const put = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch(e) {} };
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+
+let cfg = Object.assign({owner:"", repo:"apps", branch:"main", token:""}, get(CFG_KEY, {}));
+let apps = get(LIST_KEY, []);
+let dates = get(DATES_KEY, {});
+const ready = () => !!(cfg.owner && cfg.repo && cfg.token);
+
+function status(msg, err){ const s=$("status"); s.textContent = msg||""; s.className = "status"+(err?" err":""); }
+function ghErr(st){
+  return ({401:"Token refusé ou expiré.",403:"Le token n'a pas accès à ce dépôt (ou limite d'appels atteinte).",404:"Dépôt, branche ou fichier introuvable, ou token sans accès à ce dépôt."})[st] || ("Erreur GitHub "+st+".");
+}
+async function api(path, raw){
+  const r = await fetch(`https://api.github.com/repos/${encodeURIComponent(cfg.owner)}/${encodeURIComponent(cfg.repo)}/${path}`, {
+    headers:{Authorization:"Bearer "+cfg.token, Accept: raw ? "application/vnd.github.raw+json" : "application/vnd.github+json", "X-GitHub-Api-Version":"2022-11-28"},
+    cache:"no-store"});
+  if(!r.ok) throw new Error(ghErr(r.status));
+  return raw ? r.text() : r.json();
+}
+const filePath = f => f.split("/").map(encodeURIComponent).join("/");
+const ref = () => "ref="+encodeURIComponent(cfg.branch||"main");
+
+/* ---------- liste ---------- */
+function render(){
+  const g = $("grid");
+  if(!apps.length){ g.innerHTML = ""; return; }
+  g.innerHTML = apps.map((a,i) => {
+    const icon = a.icone || (a.nom||"?").slice(0,2).toUpperCase();
+    const emoji = /\p{Extended_Pictographic}/u.test(icon);
+    let meta = a.lien ? "Lien direct" : (dates[a.fichier] ? "Mis à jour le "+new Date(dates[a.fichier]).toLocaleDateString("fr-BE") : "");
+    return `<button class="tile" data-i="${i}">
+      <span class="ico ${emoji?"emoji":""}" style="--c:${esc(a.couleur||"")}">${esc(icon)}</span>
+      <span><b>${esc(a.nom)}</b><span class="d">${esc(a.description||"")}</span>${meta?`<span class="m">${esc(meta)}</span>`:""}</span>
+    </button>`;
+  }).join("");
+  g.querySelectorAll(".tile").forEach(t => t.onclick = () => openApp(apps[+t.dataset.i]));
+}
+async function loadList(){
+  if(!ready()){ $("setup").classList.remove("hidden"); status(apps.length ? "Hors connexion au dépôt : liste enregistrée." : "Renseignez l'accès au dépôt pour afficher vos applis."); render(); return; }
+  status("Mise à jour de la liste…");
+  try{
+    const list = JSON.parse(await api(`contents/apps.json?${ref()}`, true));
+    if(!Array.isArray(list)) throw new Error("apps.json doit contenir une liste.");
+    apps = list; put(LIST_KEY, apps); render(); status("");
+    await Promise.all(apps.filter(a=>a.fichier).map(async a => {
+      try{ const c = await api(`commits?path=${encodeURIComponent(a.fichier)}&sha=${encodeURIComponent(cfg.branch||"main")}&per_page=1`);
+        if(c[0]) dates[a.fichier] = c[0].commit.committer.date; }catch(e){}
+    }));
+    put(DATES_KEY, dates); render();
+    openFromHash();
+  }catch(e){
+    render();
+    const off = e instanceof TypeError;
+    status(off ? "Pas de réseau : liste enregistrée affichée, les applis déjà ouvertes restent disponibles." : (e instanceof SyntaxError ? "apps.json est mal formé." : e.message), !off);
+    openFromHash();
+  }
+}
+
+/* ---------- ouverture d'une appli ---------- */
+async function fetchApp(a){
+  const key = new Request("./__apps/"+encodeURIComponent(a.fichier));
+  try{
+    const html = await api(`contents/${filePath(a.fichier)}?${ref()}`, true);
+    try{ const c = await caches.open(CACHE); await c.put(key, new Response(html, {headers:{"Content-Type":"text/html"}})); }catch(e){}
+    return html;
+  }catch(e){
+    try{ const c = await caches.open(CACHE); const r = await c.match(key); if(r){ status("Hors ligne : dernière version enregistrée de "+a.nom+".", true); return r.text(); } }catch(_){}
+    throw e;
+  }
+}
+async function openApp(a, fromHash){
+  if(a.lien){ location.href = a.lien; return; }
+  if(!ready()){ $("setup").classList.remove("hidden"); return; }
+  const v=$("viewer"), f=$("frame");
+  $("loading").classList.remove("hidden"); f.classList.add("hidden"); v.classList.add("open");
+  document.title = a.nom;
+  if(!fromHash) history.pushState({app:a.id}, "", "#"+encodeURIComponent(a.id||""));
+  try{
+    const html = await fetchApp(a);
+    if(!v.classList.contains("open")) return;
+    f.srcdoc = html; f.classList.remove("hidden"); $("loading").classList.add("hidden");
+  }catch(e){ closeViewer(); status("Impossible d'ouvrir "+a.nom+" : "+(e instanceof TypeError ? "pas de réseau et aucune copie enregistrée." : e.message), true); if(location.hash) history.replaceState(null,"",location.pathname); }
+}
+function closeViewer(){
+  const f=$("frame"); f.removeAttribute("srcdoc"); f.src="about:blank";
+  $("viewer").classList.remove("open"); document.title = "Mes applis";
+}
+let hashDone = false;
+function openFromHash(){
+  if(hashDone) return; hashDone = true;
+  const id = decodeURIComponent(location.hash.slice(1)); if(!id) return;
+  const a = apps.find(x=>x.id===id); if(!a) return;
+  history.replaceState(null, "", location.pathname); history.pushState({app:a.id}, "", "#"+encodeURIComponent(id));
+  openApp(a, true);
+}
+window.addEventListener("popstate", () => { if(!location.hash && $("viewer").classList.contains("open")) closeViewer(); });
+$("home").onclick = () => { if(location.hash) history.back(); else closeViewer(); };
+
+/* ---------- réglages ---------- */
+function fillSetup(){ $("cOwner").value=cfg.owner; $("cRepo").value=cfg.repo; $("cBranch").value=cfg.branch; $("cToken").value=cfg.token; }
+$("bSetup").onclick = () => { fillSetup(); $("setup").classList.toggle("hidden"); };
+$("bSave").onclick = () => {
+  cfg = {owner:$("cOwner").value.trim(), repo:$("cRepo").value.trim()||"apps", branch:$("cBranch").value.trim()||"main", token:$("cToken").value.trim()};
+  put(CFG_KEY, cfg); if(ready()) $("setup").classList.add("hidden"); hashDone = true; loadList();
+};
+$("bForget").onclick = () => { if(confirm("Retirer le token de cet appareil ?")){ cfg.token=""; put(CFG_KEY,cfg); fillSetup(); status("Token retiré."); } };
+
+if("serviceWorker" in navigator && location.protocol==="https:" && !location.hostname.endsWith("claude.ai")){
+  navigator.serviceWorker.register("sw.js").catch(()=>{});
+}
+fillSetup(); render(); loadList();
+</script>
+</body>
+</html>
