@@ -177,7 +177,7 @@ async function fetchApp(a){
   }
 }
 async function openApp(a, fromHash){
-  if(a.lien){ location.href = a.lien; return; }
+  if(a.lien){ try{ sessionStorage.setItem("crablab.return","1"); }catch(e){} location.href = a.lien; return; }
   if(!ready()){ $("setup").classList.remove("hidden"); return; }
   const v=$("viewer"), f=$("frame");
   $("loading").classList.remove("hidden"); f.classList.add("hidden"); v.classList.add("open");
