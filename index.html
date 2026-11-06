@@ -7,11 +7,11 @@
 <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#151B21">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="Mes applis">
+<meta name="apple-mobile-web-app-title" content="CrabLab">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
-<title>Mes applis</title>
+<title>CrabLab</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
@@ -37,6 +37,7 @@ main{max-width:900px;margin:0 auto;padding:14px 16px 40px}
 header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 0 18px;border-bottom:3px solid var(--ink);margin-bottom:18px;position:relative}
 header::after{content:"";position:absolute;left:0;bottom:-9px;width:120px;height:6px;background:repeating-linear-gradient(-45deg,var(--amber) 0 10px,transparent 10px 20px)}
 h1{font-family:var(--font-num);font-weight:700;font-size:34px;margin:0;letter-spacing:.2px}
+h1 b{color:var(--amber);font-weight:700}
 .gear{background:var(--panel);border:1px solid var(--line);border-radius:6px;height:42px;padding:0 14px;font-weight:600}
 
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px}
@@ -73,7 +74,7 @@ h1{font-family:var(--font-num);font-weight:700;font-size:34px;margin:0;letter-sp
 <body>
 <main>
   <header>
-    <h1>Mes applis</h1>
+    <h1>Crab<b>Lab</b></h1>
     <button class="gear" id="bSetup">Réglages</button>
   </header>
 
@@ -97,7 +98,7 @@ h1{font-family:var(--font-num);font-weight:700;font-size:34px;margin:0;letter-sp
 <div id="viewer">
   <div id="loading">Chargement…</div>
   <iframe id="frame" title="Application" allow="fullscreen; clipboard-read; clipboard-write" allowfullscreen></iframe>
-  <button id="home" aria-label="Retour à mes applis" title="Retour à mes applis">⌂</button>
+  <button id="home" aria-label="Retour à CrabLab" title="Retour à CrabLab">⌂</button>
 </div>
 
 <script>
@@ -190,7 +191,7 @@ async function openApp(a, fromHash){
 }
 function closeViewer(){
   const f=$("frame"); f.removeAttribute("srcdoc"); f.src="about:blank";
-  $("viewer").classList.remove("open"); document.title = "Mes applis";
+  $("viewer").classList.remove("open"); document.title = "CrabLab";
 }
 let hashDone = false;
 function openFromHash(){
