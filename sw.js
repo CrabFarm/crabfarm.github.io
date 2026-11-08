@@ -1,6 +1,6 @@
 // Ne gère que les fichiers de la page d'accueil : les applis hébergées
 // dans d'autres dossiers (ex. /pointage/) gardent leur propre fonctionnement.
-const CACHE = "hub-shell-v1";
+const CACHE = "hub-shell-v5";
 const FILES = ["./", "./index.html", "./manifest.webmanifest", "./icon-192.png", "./icon-512.png", "./icon-maskable-192.png", "./icon-maskable-512.png", "./apple-touch-icon.png", "./favicon-32.png"];
 const SHELL = new Set(FILES.map(f => new URL(f, self.registration.scope).href));
 self.addEventListener("install", e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(FILES)).then(() => self.skipWaiting())); });
