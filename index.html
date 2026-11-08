@@ -7,11 +7,11 @@
 <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#151B21">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="CrabLab">
+<meta name="apple-mobile-web-app-title" content="Mes applis">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
-<title>CrabLab</title>
+<title>Mes applis</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
@@ -37,7 +37,6 @@ main{max-width:900px;margin:0 auto;padding:14px 16px 40px}
 header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 0 18px;border-bottom:3px solid var(--ink);margin-bottom:18px;position:relative}
 header::after{content:"";position:absolute;left:0;bottom:-9px;width:120px;height:6px;background:repeating-linear-gradient(-45deg,var(--amber) 0 10px,transparent 10px 20px)}
 h1{font-family:var(--font-num);font-weight:700;font-size:34px;margin:0;letter-spacing:.2px}
-h1 b{color:var(--amber);font-weight:700}
 .gear{background:var(--panel);border:1px solid var(--line);border-radius:6px;height:42px;padding:0 14px;font-weight:600}
 
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px}
@@ -74,7 +73,7 @@ h1 b{color:var(--amber);font-weight:700}
 <body>
 <main>
   <header>
-    <h1>Crab<b>Lab</b></h1>
+    <h1>Mes applis</h1>
     <button class="gear" id="bSetup">Réglages</button>
   </header>
 
@@ -98,7 +97,7 @@ h1 b{color:var(--amber);font-weight:700}
 <div id="viewer">
   <div id="loading">Chargement…</div>
   <iframe id="frame" title="Application" allow="fullscreen; clipboard-read; clipboard-write" allowfullscreen></iframe>
-  <button id="home" aria-label="Retour à CrabLab" title="Retour à CrabLab">⌂</button>
+  <button id="home" aria-label="Retour à mes applis" title="Retour à mes applis">⌂</button>
 </div>
 
 <script>
@@ -176,10 +175,11 @@ async function fetchApp(a){
     throw e;
   }
 }
+let curApp = null;
 async function openApp(a, fromHash){
-  if(a.lien){ try{ sessionStorage.setItem("crablab.return","1"); }catch(e){} location.href = a.lien; return; }
+  if(a.lien){ location.href = a.lien; return; }
   if(!ready()){ $("setup").classList.remove("hidden"); return; }
-  const v=$("viewer"), f=$("frame");
+  const v=$("viewer"), f=$("frame"); curApp = a.id;
   $("loading").classList.remove("hidden"); f.classList.add("hidden"); v.classList.add("open");
   document.title = a.nom;
   if(!fromHash) history.pushState({app:a.id}, "", "#"+encodeURIComponent(a.id||""));
@@ -190,8 +190,9 @@ async function openApp(a, fromHash){
   }catch(e){ closeViewer(); status("Impossible d'ouvrir "+a.nom+" : "+(e instanceof TypeError ? "pas de réseau et aucune copie enregistrée." : e.message), true); if(location.hash) history.replaceState(null,"",location.pathname); }
 }
 function closeViewer(){
+  curApp = null;
   const f=$("frame"); f.removeAttribute("srcdoc"); f.src="about:blank";
-  $("viewer").classList.remove("open"); document.title = "CrabLab";
+  $("viewer").classList.remove("open"); document.title = "Mes applis";
 }
 let hashDone = false;
 function openFromHash(){
@@ -201,7 +202,14 @@ function openFromHash(){
   history.replaceState(null, "", location.pathname); history.pushState({app:a.id}, "", "#"+encodeURIComponent(id));
   openApp(a, true);
 }
-window.addEventListener("popstate", () => { if(!location.hash && $("viewer").classList.contains("open")) closeViewer(); });
+window.addEventListener("popstate", () => {
+  const id = decodeURIComponent(location.hash.slice(1));
+  if(!id){ if($("viewer").classList.contains("open")) closeViewer(); return; }
+  const a = apps.find(x => x.id === id);
+  if(a && a.id !== curApp) openApp(a, true);
+});
+/* une appli peut en ouvrir une autre (ex. AFLab ouvre un GRAFCET dans G7) */
+window.hubOpen = id => { const a = apps.find(x => x.id === id); if(!a) return false; openApp(a); return true; };
 $("home").onclick = () => { if(location.hash) history.back(); else closeViewer(); };
 
 /* ---------- réglages ---------- */
