@@ -39,6 +39,14 @@ header::after{content:"";position:absolute;left:0;bottom:-9px;width:120px;height
 h1{font-family:var(--font-num);font-weight:700;font-size:34px;margin:0;letter-spacing:.2px}
 h1 b{color:var(--amber);font-weight:700}
 .gear{background:var(--panel);border:1px solid var(--line);border-radius:6px;height:42px;padding:0 14px;font-weight:600}
+.hbtns{display:flex;gap:8px}
+.gear[aria-pressed="true"]{background:var(--amber);border-color:var(--amber);color:var(--amber-ink)}
+body.pres #bSetup,body.pres #setup{display:none!important}
+.tile .m.hid{color:var(--warn)}
+.vis{margin:14px 0 0;padding-top:12px;border-top:1px solid var(--line)}
+.vis h3{margin:0 0 4px;font-size:16px}
+.vis label{display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--line);cursor:pointer}
+.vis input{width:20px;height:20px;accent-color:var(--amber)}
 
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px}
 .tile{display:flex;gap:14px;align-items:center;text-align:left;width:100%;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:14px;color:inherit;text-decoration:none}
@@ -75,7 +83,10 @@ h1 b{color:var(--amber);font-weight:700}
 <main>
   <header>
     <h1>Crab<b>Lab</b></h1>
-    <button class="gear" id="bSetup">Réglages</button>
+    <div class="hbtns">
+      <button class="gear" id="bPres" aria-pressed="false" title="Mode présentation : masque les applis choisies dans les réglages">Présentation</button>
+      <button class="gear" id="bSetup">Réglages</button>
+    </div>
   </header>
 
   <section id="setup" class="hidden">
@@ -88,6 +99,11 @@ h1 b{color:var(--amber);font-weight:700}
     <div class="btns">
       <button class="btn" id="bSave">Enregistrer et charger</button>
       <button class="btn ghost" id="bForget">Oublier le token</button>
+    </div>
+    <div class="vis">
+      <h3>Mode présentation</h3>
+      <p>Coche les applis à masquer quand le bouton « Présentation » est activé (applis pas encore terminées, par exemple). Réglage propre à cet appareil.</p>
+      <div id="visList"></div>
     </div>
   </section>
 
@@ -129,19 +145,37 @@ const filePath = f => f.split("/").map(encodeURIComponent).join("/");
 const ref = () => "ref="+encodeURIComponent(cfg.branch||"main");
 
 /* ---------- liste ---------- */
+/* mode présentation : applis masquées (choix local ; à défaut, « brouillon »: true dans apps.json) */
+const PRES_KEY = "crablab.presentation";
+let pres = Object.assign({on: false, hide: {}}, get(PRES_KEY, {}));
+const isHidden = a => (a.id in pres.hide) ? !!pres.hide[a.id] : !!a.brouillon;
+const visible = a => !(pres.on && isHidden(a));
+function paintPres(){
+  document.body.classList.toggle("pres", pres.on);
+  $("bPres").setAttribute("aria-pressed", pres.on ? "true" : "false");
+  if(pres.on) $("setup").classList.add("hidden");
+}
+function paintVis(){
+  $("visList").innerHTML = apps.length ? apps.map(a => `<label><input type="checkbox" data-vis="${esc(a.id)}"${isHidden(a) ? " checked" : ""}><span><b>${esc(a.nom)}</b> · masquer en présentation</span></label>`).join("") : '<p>La liste des applis n\'est pas encore chargée.</p>';
+  $("visList").querySelectorAll("[data-vis]").forEach(c => c.onchange = () => { pres.hide[c.dataset.vis] = c.checked; put(PRES_KEY, pres); render(); });
+}
+$("bPres").onclick = () => { pres.on = !pres.on; put(PRES_KEY, pres); paintPres(); render(); };
 function render(){
   const g = $("grid");
   if(!apps.length){ g.innerHTML = ""; return; }
   g.innerHTML = apps.map((a,i) => {
+    if(!visible(a)) return "";
     const icon = a.icone || (a.nom||"?").slice(0,2).toUpperCase();
     const emoji = /\p{Extended_Pictographic}/u.test(icon);
     let meta = a.lien ? "Lien direct" : (dates[a.fichier] ? "Mis à jour le "+new Date(dates[a.fichier]).toLocaleDateString("fr-BE") : "");
+    const hid = !pres.on && isHidden(a);
     return `<button class="tile" data-i="${i}">
       <span class="ico ${emoji?"emoji":""}" style="--c:${esc(a.couleur||"")}">${esc(icon)}</span>
-      <span><b>${esc(a.nom)}</b><span class="d">${esc(a.description||"")}</span>${meta?`<span class="m">${esc(meta)}</span>`:""}</span>
+      <span><b>${esc(a.nom)}</b><span class="d">${esc(a.description||"")}</span>${meta?`<span class="m">${esc(meta)}</span>`:""}${hid?`<span class="m hid">Masquée en présentation</span>`:""}</span>
     </button>`;
   }).join("");
   g.querySelectorAll(".tile").forEach(t => t.onclick = () => openApp(apps[+t.dataset.i]));
+  paintVis();
 }
 async function loadList(){
   if(!ready()){ $("setup").classList.remove("hidden"); status(apps.length ? "Hors connexion au dépôt : liste enregistrée." : "Renseignez l'accès au dépôt pour afficher vos applis."); render(); return; }
@@ -199,7 +233,7 @@ let hashDone = false;
 function openFromHash(){
   if(hashDone) return; hashDone = true;
   const id = decodeURIComponent(location.hash.slice(1)); if(!id) return;
-  const a = apps.find(x=>x.id===id); if(!a) return;
+  const a = apps.find(x=>x.id===id); if(!a || !visible(a)) return;
   history.replaceState(null, "", location.pathname); history.pushState({app:a.id}, "", "#"+encodeURIComponent(id));
   openApp(a, true);
 }
@@ -207,10 +241,10 @@ window.addEventListener("popstate", () => {
   const id = decodeURIComponent(location.hash.slice(1));
   if(!id){ if($("viewer").classList.contains("open")) closeViewer(); return; }
   const a = apps.find(x => x.id === id);
-  if(a && a.id !== curApp) openApp(a, true);
+  if(a && a.id !== curApp && visible(a)) openApp(a, true);
 });
 /* une appli peut en ouvrir une autre (ex. AFLab ouvre un GRAFCET dans G7) */
-window.hubOpen = id => { const a = apps.find(x => x.id === id); if(!a) return false; openApp(a); return true; };
+window.hubOpen = id => { const a = apps.find(x => x.id === id); if(!a || !visible(a)) return false; openApp(a); return true; };
 $("home").onclick = () => { if(location.hash) history.back(); else closeViewer(); };
 
 /* ---------- réglages ---------- */
@@ -225,7 +259,7 @@ $("bForget").onclick = () => { if(confirm("Retirer le token de cet appareil ?"))
 if("serviceWorker" in navigator && location.protocol==="https:" && !location.hostname.endsWith("claude.ai")){
   navigator.serviceWorker.register("sw.js").catch(()=>{});
 }
-fillSetup(); render(); loadList();
+paintPres(); fillSetup(); render(); loadList();
 </script>
 </body>
 </html>
